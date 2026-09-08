@@ -4,25 +4,22 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 -- Serviços do Roblox
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 local VirtualUser = game:GetService("VirtualUser")
-local TeleportService = game:GetService("TeleportService")
 local CoreGui = game:GetService("CoreGui")
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
--- Criação da Janela Principal (Sem Sistema de Key)
+-- Criação da Janela Principal
 local Window = Rayfield:CreateWindow({
-   Name = "⚡ exclusivo para amigos | Full Hub",
-   LoadingTitle = "Carregando Todos os Comandos...",
+   Name = "⚡ exclusivo para amigos | Hub",
+   LoadingTitle = "Carregando Hub...",
    LoadingSubtitle = "exclusivo para amigos",
    ConfigurationSaving = { Enabled = false },
    Discord = { Enabled = false },
    KeySystem = false
 })
 
--- ABAS DO MENU
-local TabESP      = Window:CreateTab("👁️ Visuais & ESP", 4483362458)
+-- ABAS DO MENU (ESP Removido)
 local TabCombat   = Window:CreateTab("🎯 Aimbot & Combat", 4483362458)
 local TabMovement = Window:CreateTab("🚀 Movimento & Poderes", 4483362458)
 local TabTeleport = Window:CreateTab("🌎 Teleportes", 4483362458)
@@ -51,20 +48,11 @@ local HitboxEnabled = false
 local HitboxSize = 15
 local AirWalkEnabled = false
 
-local ESPEnabled = false
-local ESPBox = false
-local ESPName = false
-local ESPDistance = false
-local ESPLine = false
-
 local AntiAFKEnabled = true
 local AutoClickerEnabled = false
 local AutoClickerDelay = 0.1
-local BlackScreenEnabled = false
-
 local TargetPlayerName = ""
 
--- Círculo FOV
 local FOVCircle = Drawing.new("Circle")
 FOVCircle.Color = Color3.fromRGB(0, 255, 150)
 FOVCircle.Thickness = 1.5
@@ -73,20 +61,6 @@ FOVCircle.Radius = FOVRadius
 FOVCircle.Filled = false
 FOVCircle.Visible = false
 
--- Tabela para armazenar desenhos de ESP
-local ESPDrawings = {}
-
--- Função para remover ESP de um jogador
-local function RemovePlayerESP(player)
-   if ESPDrawings[player] then
-      for _, drawing in pairs(ESPDrawings[player]) do
-         if drawing then drawing:Remove() end
-      end
-      ESPDrawings[player] = nil
-   end
-end
-
--- Função Auxiliar: Jogador Mais Próximo
 local function GetClosestPlayer()
    local closest = nil
    local shortestDistance = FOVRadius
@@ -111,37 +85,10 @@ local function GetClosestPlayer()
    return closest
 end
 
--- ==================== ABA ESP ====================
-
-TabESP:CreateToggle({
-   Name = "Ativar ESP Master",
-   CurrentValue = false,
-   Callback = function(Value) 
-      ESPEnabled = Value 
-      if not Value then
-         for _, p in pairs(Players:GetPlayers()) do RemovePlayerESP(p) end
-      end
-   end,
-})
-
-TabESP:CreateToggle({Name = "ESP Box (Caixa 2D)", CurrentValue = false, Callback = function(Value) ESPBox = Value end})
-TabESP:CreateToggle({Name = "ESP Nome", CurrentValue = false, Callback = function(Value) ESPName = Value end})
-TabESP:CreateToggle({Name = "ESP Distância", CurrentValue = false, Callback = function(Value) ESPDistance = Value end})
-TabESP:CreateToggle({Name = "ESP Linha (Tracer)", CurrentValue = false, Callback = function(Value) ESPLine = Value end})
-
-TabESP:CreateButton({
-   Name = "Visão Noturna (Fullbright)",
-   Callback = function()
-      game:GetService("Lighting").Ambient = Color3.fromRGB(255, 255, 255)
-      game:GetService("Lighting").Brightness = 2
-      game:GetService("Lighting").GlobalShadows = false
-   end,
-})
-
 -- ==================== ABA COMBATE ====================
 
 TabCombat:CreateToggle({Name = "Aimbot (Trava Mira)", CurrentValue = false, Callback = function(Value) AimbotEnabled = Value end})
-TabCombat:CreateToggle({Name = "Silent Aim (tiro curva)", CurrentValue = false, Callback = function(Value) SilentAimEnabled = Value end})
+TabCombat:CreateToggle({Name = "Silent Aim (Camera Lock Assist)", CurrentValue = false, Callback = function(Value) SilentAimEnabled = Value end})
 TabCombat:CreateToggle({Name = "TriggerBot (Atira Auto)", CurrentValue = false, Callback = function(Value) TriggerBotEnabled = Value end})
 TabCombat:CreateDropdown({Name = "Parte do Corpo", Options = {"Head", "HumanoidRootPart"}, CurrentOption = {"Head"}, Callback = function(Option) AimPart = Option[1] or Option end})
 
@@ -155,7 +102,7 @@ TabMovement:CreateSlider({Name = "Velocidade", Range = {16, 350}, Increment = 1,
 TabMovement:CreateToggle({Name = "Super Pulo", CurrentValue = false, Callback = function(Value) JumpEnabled = Value end})
 TabMovement:CreateSlider({Name = "Força Pulo", Range = {50, 300}, Increment = 5, Suffix = " Power", CurrentValue = 50, Callback = function(Value) JumpValue = Value end})
 
-TabMovement:CreateParagraph({Title = "⚡ Poderes Admin", Content = "Comandos de movimentação avançada."})
+TabMovement:CreateParagraph({Title = "⚡ Poderes", Content = "Comandos de movimentação avançada."})
 TabMovement:CreateToggle({Name = "Fly (Voo Direcional)", CurrentValue = false, Callback = function(Value) FlyEnabled = Value end})
 TabMovement:CreateSlider({Name = "Velocidade do Voo", Range = {10, 250}, Increment = 5, Suffix = " Speed", CurrentValue = 50, Callback = function(Value) FlySpeed = Value end})
 TabMovement:CreateToggle({Name = "Noclip (Atravessar Paredes)", CurrentValue = false, Callback = function(Value) NoclipEnabled = Value end})
@@ -190,7 +137,6 @@ TabAFK:CreateToggle({Name = "Anti-AFK", CurrentValue = true, Callback = function
 TabAFK:CreateToggle({Name = "Auto Clicker", CurrentValue = false, Callback = function(Value) AutoClickerEnabled = Value end})
 TabAFK:CreateSlider({Name = "Delay Click (seg)", Range = {0.05, 2}, Increment = 0.05, Suffix = "s", CurrentValue = 0.1, Callback = function(Value) AutoClickerDelay = Value end})
 TabAFK:CreateToggle({Name = "Black Screen (Economia Bateria)", CurrentValue = false, Callback = function(Value)
-    BlackScreenEnabled = Value
     local blackFrame = CoreGui:FindFirstChild("AFKBlackFrame")
     if Value then
         if not blackFrame then
@@ -210,7 +156,6 @@ end})
 -- ==================== ABA CONFIGURAÇÕES ====================
 TabSettings:CreateButton({Name = "Destruir Script", Callback = function()
     FOVCircle:Remove()
-    for _, p in pairs(Players:GetPlayers()) do RemovePlayerESP(p) end
     if CoreGui:FindFirstChild("AFKBlackFrame") then CoreGui.AFKBlackFrame:Destroy() end
     if workspace:FindFirstChild("AirWalkPart") then workspace.AirWalkPart:Destroy() end
     Rayfield:Destroy()
@@ -218,17 +163,24 @@ end})
 
 -- ==================== SISTEMAS E THREADS ====================
 
--- Anti-AFK
 LocalPlayer.Idled:Connect(function() if AntiAFKEnabled then VirtualUser:CaptureController(); VirtualUser:ClickButton2(Vector2.new()) end end)
 
--- Auto Clicker
-task.spawn(function() while true do task.wait(AutoClickerDelay) if AutoClickerEnabled then VirtualUser:CaptureController(); VirtualUser:ClickButton1(Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)) end end end)
+task.spawn(function()
+   while true do
+      task.wait(AutoClickerDelay)
+      if AutoClickerEnabled then
+         VirtualUser:CaptureController()
+         VirtualUser:ClickButton1(Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2))
+      end
+   end
+end)
 
--- Loop Principal (Render & Stepped)
 RunService.RenderStepped:Connect(function()
     FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+
     if SpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then LocalPlayer.Character.Humanoid.WalkSpeed = SpeedValue end
     if JumpEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then LocalPlayer.Character.Humanoid.UseJumpPower = true; LocalPlayer.Character.Humanoid.JumpPower = JumpValue end
+
     if FlyEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = LocalPlayer.Character.HumanoidRootPart
         local moveDir = LocalPlayer.Character:FindFirstChildOfClass("Humanoid").MoveDirection
@@ -238,10 +190,43 @@ RunService.RenderStepped:Connect(function()
     if AirWalkEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local part = workspace:FindFirstChild("AirWalkPart") or Instance.new("Part", workspace); part.Name = "AirWalkPart"; part.Size = Vector3.new(7, 1, 7); part.Transparency = 0.8; part.Anchored = true; part.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, -3.5, 0)
     end
-    if (AimbotEnabled or SilentAimEnabled or TriggerBotEnabled) then
+    
+    if AimbotEnabled or SilentAimEnabled or TriggerBotEnabled then
         local target = GetClosestPlayer()
         if target and target.Character and target.Character:FindFirstChild(AimPart) then
             local targetPos = target.Character[AimPart].Position
-            if AimbotEnabled then Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos) end
-            if TriggerBotEnabled then local mouseRay = Camera:ViewportPointToRay(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2); local raycastParams = RaycastParams.new
-               
+            if AimbotEnabled then 
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos) 
+            elseif SilentAimEnabled then
+                Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), 0.2)
+            end
+            if TriggerBotEnabled then
+                local mouseRay = Camera:ViewportPointToRay(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+                local raycastParams = RaycastParams.new(); raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+                local result = workspace:Raycast(mouseRay.Origin, mouseRay.Direction * 500, raycastParams)
+                if result and result.Instance and result.Instance:IsDescendantOf(target.Character) then
+                    VirtualUser:CaptureController(); VirtualUser:ClickButton1(Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2))
+                end
+            end
+        end
+    end
+end)
+
+RunService.Stepped:Connect(function()
+   if NoclipEnabled and LocalPlayer.Character then
+      for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+         if part:IsA("BasePart") then part.CanCollide = false end
+      end
+   end
+   if HitboxEnabled then
+      for _, player in pairs(Players:GetPlayers()) do
+         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = player.Character.HumanoidRootPart
+            hrp.Size = Vector3.new(HitboxSize, HitboxSize, HitboxSize)
+            hrp.Transparency = 0.7; hrp.BrickColor = BrickColor.new("Really red"); hrp.Material = Enum.Material.Neon; hrp.CanCollide = false
+         end
+      end
+   end
+end)
+
+Rayfield:Notify({Title = "⚡ Sucesso", Content = "Hub Limpo Carregado!", Duration = 5})
