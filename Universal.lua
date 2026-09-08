@@ -4,6 +4,7 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 -- Serviços do Roblox
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 local VirtualUser = game:GetService("VirtualUser")
 local CoreGui = game:GetService("CoreGui")
 local Camera = workspace.CurrentCamera
@@ -11,25 +12,24 @@ local LocalPlayer = Players.LocalPlayer
 
 -- Criação da Janela Principal
 local Window = Rayfield:CreateWindow({
-   Name = "⚡ exclusivo para amigos | Hub",
-   LoadingTitle = "Carregando Hub...",
+   Name = "⚡ Hub Estável | Funções Garantidas",
+   LoadingTitle = "Carregando...",
    LoadingSubtitle = "exclusivo para amigos",
    ConfigurationSaving = { Enabled = false },
    Discord = { Enabled = false },
    KeySystem = false
 })
 
--- ABAS DO MENU (ESP Removido)
-local TabCombat   = Window:CreateTab("🎯 Aimbot & Combat", 4483362458)
-local TabMovement = Window:CreateTab("🚀 Movimento & Poderes", 4483362458)
+-- ABAS DO MENU
+local TabCombat   = Window:CreateTab("🎯 Combate & Mira", 4483362458)
+local TabMovement = Window:CreateTab("🚀 Movimento", 4483362458)
+local TabESP      = Window:CreateTab("👁️ ESP Paredes", 4483362458)
 local TabTeleport = Window:CreateTab("🌎 Teleportes", 4483362458)
-local TabAFK      = Window:CreateTab("💤 AFK & Otimização", 4483362458)
+local TabAFK      = Window:CreateTab("💤 Utilidades", 4483362458)
 local TabSettings = Window:CreateTab("⚙️ Configurações", 4483362458)
 
 -- VARIÁVEIS DE CONTROLE
 local AimbotEnabled = false
-local SilentAimEnabled = false
-local TriggerBotEnabled = false
 local AimPart = "Head"
 local FOVRadius = 120
 local ShowFOVCircle = false
@@ -38,15 +38,12 @@ local SpeedValue = 16
 local SpeedEnabled = false
 local JumpValue = 50
 local JumpEnabled = false
-
-local FlyEnabled = false
-local FlySpeed = 50
+local InfJumpEnabled = false
 local NoclipEnabled = false
-local SpinBotEnabled = false
-local SpinSpeed = 50
 local HitboxEnabled = false
 local HitboxSize = 15
-local AirWalkEnabled = false
+
+local ESPEnabled = false
 
 local AntiAFKEnabled = true
 local AutoClickerEnabled = false
@@ -88,30 +85,78 @@ end
 -- ==================== ABA COMBATE ====================
 
 TabCombat:CreateToggle({Name = "Aimbot (Trava Mira)", CurrentValue = false, Callback = function(Value) AimbotEnabled = Value end})
-TabCombat:CreateToggle({Name = "Silent Aim (Camera Lock Assist)", CurrentValue = false, Callback = function(Value) SilentAimEnabled = Value end})
-TabCombat:CreateToggle({Name = "TriggerBot (Atira Auto)", CurrentValue = false, Callback = function(Value) TriggerBotEnabled = Value end})
 TabCombat:CreateDropdown({Name = "Parte do Corpo", Options = {"Head", "HumanoidRootPart"}, CurrentOption = {"Head"}, Callback = function(Option) AimPart = Option[1] or Option end})
 
 TabCombat:CreateToggle({Name = "Mostrar Círculo FOV", CurrentValue = false, Callback = function(Value) ShowFOVCircle = Value; FOVCircle.Visible = Value end})
 TabCombat:CreateSlider({Name = "Tamanho FOV", Range = {30, 500}, Increment = 5, Suffix = " px", CurrentValue = 120, Callback = function(Value) FOVRadius = Value; FOVCircle.Radius = Value end})
 
--- ==================== ABA MOVIMENTO & PODERES ====================
+-- ==================== ABA MOVIMENTO ====================
 
 TabMovement:CreateToggle({Name = "Speed Hack", CurrentValue = false, Callback = function(Value) SpeedEnabled = Value end})
-TabMovement:CreateSlider({Name = "Velocidade", Range = {16, 350}, Increment = 1, Suffix = " Speed", CurrentValue = 16, Callback = function(Value) SpeedValue = Value end})
+TabMovement:CreateSlider({Name = "Velocidade", Range = {16, 250}, Increment = 1, Suffix = " Speed", CurrentValue = 16, Callback = function(Value) SpeedValue = Value end})
+
 TabMovement:CreateToggle({Name = "Super Pulo", CurrentValue = false, Callback = function(Value) JumpEnabled = Value end})
 TabMovement:CreateSlider({Name = "Força Pulo", Range = {50, 300}, Increment = 5, Suffix = " Power", CurrentValue = 50, Callback = function(Value) JumpValue = Value end})
 
-TabMovement:CreateParagraph({Title = "⚡ Poderes", Content = "Comandos de movimentação avançada."})
-TabMovement:CreateToggle({Name = "Fly (Voo Direcional)", CurrentValue = false, Callback = function(Value) FlyEnabled = Value end})
-TabMovement:CreateSlider({Name = "Velocidade do Voo", Range = {10, 250}, Increment = 5, Suffix = " Speed", CurrentValue = 50, Callback = function(Value) FlySpeed = Value end})
+TabMovement:CreateToggle({Name = "Pulo Infinito (Infinite Jump)", CurrentValue = false, Callback = function(Value) InfJumpEnabled = Value end})
 TabMovement:CreateToggle({Name = "Noclip (Atravessar Paredes)", CurrentValue = false, Callback = function(Value) NoclipEnabled = Value end})
-TabMovement:CreateToggle({Name = "SpinBot (Girar Rápido)", CurrentValue = false, Callback = function(Value) SpinBotEnabled = Value end})
-TabMovement:CreateSlider({Name = "Velocidade SpinBot", Range = {10, 300}, Increment = 5, Suffix = " RPM", CurrentValue = 50, Callback = function(Value) SpinSpeed = Value end})
+
 TabMovement:CreateToggle({Name = "Expandir Hitbox Inimiga", CurrentValue = false, Callback = function(Value) HitboxEnabled = Value end})
-TabMovement:CreateSlider({Name = "Tamanho Hitbox", Range = {2, 50}, Increment = 1, Suffix = " Studs", CurrentValue = 15, Callback = function(Value) HitboxSize = Value end})
-TabMovement:CreateToggle({Name = "Air Walk (Andar no Ar)", CurrentValue = false, Callback = function(Value) AirWalkEnabled = Value end})
-TabMovement:CreateButton({Name = "Modo Deus (Godmode)", Callback = function() if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then LocalPlayer.Character:FindFirstChildOfClass("Humanoid").Health = 9e9 end end})
+TabMovement:CreateSlider({Name = "Tamanho Hitbox", Range = {2, 30}, Increment = 1, Suffix = " Studs", CurrentValue = 15, Callback = function(Value) HitboxSize = Value end})
+
+TabMovement:CreateButton({Name = "Visão Noturna (Fullbright)", Callback = function()
+    game:GetService("Lighting").Ambient = Color3.fromRGB(255, 255, 255)
+    game:GetService("Lighting").Brightness = 2
+    game:GetService("Lighting").GlobalShadows = false
+end})
+
+-- ==================== ABA ESP PAREDES ====================
+
+TabESP:CreateToggle({
+   Name = "ESP Chams (Ver através da parede)",
+   CurrentValue = false,
+   Callback = function(Value)
+      ESPEnabled = Value
+      for _, player in pairs(Players:GetPlayers()) do
+         if player ~= LocalPlayer and player.Character then
+            local highlight = player.Character:FindFirstChild("ESPHighlight")
+            if Value then
+               if not highlight then
+                  local hl = Instance.new("Highlight")
+                  hl.Name = "ESPHighlight"
+                  hl.Adornee = player.Character
+                  hl.FillColor = Color3.fromRGB(0, 255, 100)
+                  hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                  hl.FillTransparency = 0.4
+                  hl.OutlineTransparency = 0
+                  hl.Parent = player.Character
+               end
+            else
+               if highlight then
+                  highlight:Destroy()
+               end
+            end
+         end
+      end
+   end,
+})
+
+-- Garante que jogadores que entram depois também ganhem ESP se estiver ativo
+Players.PlayerAdded:Connect(function(player)
+   player.CharacterAdded:Connect(function(char)
+      if ESPEnabled then
+         task.wait(1)
+         local hl = Instance.new("Highlight")
+         hl.Name = "ESPHighlight"
+         hl.Adornee = char
+         hl.FillColor = Color3.fromRGB(0, 255, 100)
+         hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+         hl.FillTransparency = 0.4
+         hl.OutlineTransparency = 0
+         hl.Parent = char
+      end
+   end)
+end)
 
 -- ==================== ABA TELEPORTE ====================
 
@@ -131,23 +176,12 @@ end})
 
 TabTeleport:CreateButton({Name = "Ir para o Centro (Spawn)", Callback = function() if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(0, 50, 0) end end})
 
--- ==================== ABA AFK & OTIMIZAÇÃO ====================
+-- ==================== ABA UTILIDADES ====================
 
 TabAFK:CreateToggle({Name = "Anti-AFK", CurrentValue = true, Callback = function(Value) AntiAFKEnabled = Value end})
 TabAFK:CreateToggle({Name = "Auto Clicker", CurrentValue = false, Callback = function(Value) AutoClickerEnabled = Value end})
 TabAFK:CreateSlider({Name = "Delay Click (seg)", Range = {0.05, 2}, Increment = 0.05, Suffix = "s", CurrentValue = 0.1, Callback = function(Value) AutoClickerDelay = Value end})
-TabAFK:CreateToggle({Name = "Black Screen (Economia Bateria)", CurrentValue = false, Callback = function(Value)
-    local blackFrame = CoreGui:FindFirstChild("AFKBlackFrame")
-    if Value then
-        if not blackFrame then
-            local sg = Instance.new("ScreenGui", CoreGui); sg.Name = "AFKBlackFrame"
-            local frame = Instance.new("Frame", sg); frame.Size = UDim2.new(1, 0, 1, 0); frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-            local txt = Instance.new("TextLabel", frame); txt.Size = UDim2.new(1, 0, 1, 0); txt.Text = "⚡ MODO AFK ATIVO\nEconomizando Bateria"; txt.TextColor3 = Color3.fromRGB(0, 255, 150); txt.TextSize = 24; txt.BackgroundTransparency = 1
-        end
-    else
-        if blackFrame then blackFrame:Destroy() end
-    end
-end})
+
 TabAFK:CreateButton({Name = "Otimizar Gráficos (FPS Boost)", Callback = function()
     for _, v in pairs(game:GetDescendants()) do if v:IsA("Part") or v:IsA("UnionOperation") or v:IsA("MeshPart") then v.Material = Enum.Material.SmoothPlastic elseif v:IsA("Decal") or v:IsA("Texture") then v:Destroy() end end
     game:GetService("Lighting").GlobalShadows = false
@@ -156,14 +190,23 @@ end})
 -- ==================== ABA CONFIGURAÇÕES ====================
 TabSettings:CreateButton({Name = "Destruir Script", Callback = function()
     FOVCircle:Remove()
-    if CoreGui:FindFirstChild("AFKBlackFrame") then CoreGui.AFKBlackFrame:Destroy() end
-    if workspace:FindFirstChild("AirWalkPart") then workspace.AirWalkPart:Destroy() end
+    for _, player in pairs(Players:GetPlayers()) do
+        if player.Character and player.Character:FindFirstChild("ESPHighlight") then
+            player.Character.ESPHighlight:Destroy()
+        end
+    end
     Rayfield:Destroy()
 end})
 
 -- ==================== SISTEMAS E THREADS ====================
 
 LocalPlayer.Idled:Connect(function() if AntiAFKEnabled then VirtualUser:CaptureController(); VirtualUser:ClickButton2(Vector2.new()) end end)
+
+UserInputService.JumpRequest:Connect(function()
+    if InfJumpEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+        LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
 
 task.spawn(function()
    while true do
@@ -180,34 +223,11 @@ RunService.RenderStepped:Connect(function()
 
     if SpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then LocalPlayer.Character.Humanoid.WalkSpeed = SpeedValue end
     if JumpEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then LocalPlayer.Character.Humanoid.UseJumpPower = true; LocalPlayer.Character.Humanoid.JumpPower = JumpValue end
-
-    if FlyEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local hrp = LocalPlayer.Character.HumanoidRootPart
-        local moveDir = LocalPlayer.Character:FindFirstChildOfClass("Humanoid").MoveDirection
-        if moveDir.Magnitude > 0 then hrp.Velocity = Camera.CFrame.LookVector * (FlySpeed * moveDir.Magnitude) else hrp.Velocity = Vector3.new(0, 0, 0) end
-    end
-    if SpinBotEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then LocalPlayer.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.Angles(0, math.rad(SpinSpeed), 0) end
-    if AirWalkEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local part = workspace:FindFirstChild("AirWalkPart") or Instance.new("Part", workspace); part.Name = "AirWalkPart"; part.Size = Vector3.new(7, 1, 7); part.Transparency = 0.8; part.Anchored = true; part.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, -3.5, 0)
-    end
     
-    if AimbotEnabled or SilentAimEnabled or TriggerBotEnabled then
+    if AimbotEnabled then
         local target = GetClosestPlayer()
         if target and target.Character and target.Character:FindFirstChild(AimPart) then
-            local targetPos = target.Character[AimPart].Position
-            if AimbotEnabled then 
-                Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos) 
-            elseif SilentAimEnabled then
-                Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), 0.2)
-            end
-            if TriggerBotEnabled then
-                local mouseRay = Camera:ViewportPointToRay(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
-                local raycastParams = RaycastParams.new(); raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
-                local result = workspace:Raycast(mouseRay.Origin, mouseRay.Direction * 500, raycastParams)
-                if result and result.Instance and result.Instance:IsDescendantOf(target.Character) then
-                    VirtualUser:CaptureController(); VirtualUser:ClickButton1(Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2))
-                end
-            end
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character[AimPart].Position)
         end
     end
 end)
@@ -223,10 +243,11 @@ RunService.Stepped:Connect(function()
          if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
             local hrp = player.Character.HumanoidRootPart
             hrp.Size = Vector3.new(HitboxSize, HitboxSize, HitboxSize)
-            hrp.Transparency = 0.7; hrp.BrickColor = BrickColor.new("Really red"); hrp.Material = Enum.Material.Neon; hrp.CanCollide = false
+            hrp.Transparency = 0.6
+            hrp.CanCollide = false
          end
       end
    end
 end)
 
-Rayfield:Notify({Title = "⚡ Sucesso", Content = "Hub Limpo Carregado!", Duration = 5})
+Rayfield:Notify({Title = "⚡ Sucesso", Content = "Hub com ESP Chams Carregado!", Duration = 5})
